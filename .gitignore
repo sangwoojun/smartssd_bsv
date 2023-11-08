@@ -1,1 +1,13 @@
 .*.sw?
+*.log
+*.jou
+.o
+_x*
+tmp_*
+build_dir*
+packaged_kernel_*
+rtl_user_managed
+bsim
+.ipcache
+.run
+obj/

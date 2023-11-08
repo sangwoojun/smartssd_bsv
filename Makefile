@@ -95,7 +95,8 @@ PLATFORM_BLOCKLIST += nodma
 #Include Required Host Source Files
 CXXFLAGS += -I$(XF_PROJ_ROOT)/common/includes/cmdparser
 CXXFLAGS += -I$(XF_PROJ_ROOT)/common/includes/logger
-HOST_SRCS += $(XF_PROJ_ROOT)/common/includes/cmdparser/cmdlineparser.cpp $(XF_PROJ_ROOT)/common/includes/logger/logger.cpp src/host.cpp 
+CXXFLAGS += -I$(XF_PROJ_ROOT)/common/sw/
+HOST_SRCS += $(XF_PROJ_ROOT)/common/includes/cmdparser/cmdlineparser.cpp $(XF_PROJ_ROOT)/common/includes/logger/logger.cpp $(KERNELDIR)/host/host.cpp $(XF_PROJ_ROOT)/common/sw/platform.cpp
 # Host compiler global settings
 CXXFLAGS += -fmessage-length=0
 LDFLAGS += -lrt -lstdc++ 
