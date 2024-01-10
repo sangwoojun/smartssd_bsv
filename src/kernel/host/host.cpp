@@ -23,7 +23,7 @@
 #define DATA_SIZE (256*1024*1024)
 
 //int main(int argc, char** argv) {
-void swmain(void* arg) {
+void* swmain(void* arg) {
 	size_t vector_size_bytes = sizeof(int) * DATA_SIZE;
 
     std::cout << "Allocate Buffer in Global Memory\n";
@@ -47,12 +47,12 @@ void swmain(void* arg) {
 
 
     std::cout << "Setting the FPGA buffers" << std::endl;
-	set_fpga_buffer(0, b0);
-	set_fpga_buffer(1, b1);
+	set_fpga_buffer(0, &b0);
+	set_fpga_buffer(1, &b1);
 
 
     std::cout << "Setting the parameter registers" << std::endl;
-	write_register32(0, DATA_SIZE);
+	set_param(0, DATA_SIZE);
 
     std::cout << "INFO: IP Start" << std::endl;
 	send_start();
@@ -77,5 +77,5 @@ void swmain(void* arg) {
 //    }
 
     std::cout << "DONE\n";
-    return;
+    return NULL;
 }

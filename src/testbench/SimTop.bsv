@@ -6,15 +6,17 @@ import KernelMain::*;
 //import "BDPI" function Action bdpi_write_word(Bit#(32) buffer, Bit#(64) addr, Bit#(64) data0, Bit#(64) data1, Bit#(64) data2, Bit#(64) data3, Bit#(64) data4, Bit#(64) data5, Bit#(64) data6, Bit#(64) data7, Bit#(32) tag);
 import "BDPI" function Action bdpi_write_word(Bit#(32) buffer, Bit#(64) addr, Bit#(32) data, Bit#(32) tag);
 import "BDPI" function Bit#(64) bdpi_read_word(Bit#(32) buffer, Bit#(64) addr);
+import "BDPI" function Bit#(32) bdpi_check_started();
+import "BDPI" function Action bdpi_set_done(Bit#(32) done);
 
 module mkSimTop(Empty);
 	KernelMainIfc kernelMain <- mkKernelMain;
 	rule checkStart;
-		//if ( axi4control.ap_start ) kernelMain.start(axi4control.scalar00);
+		if ( bdpi_check_started != 0 ) kernelMain.start(0);
 	endrule
 	rule checkDone;
 		if ( kernelMain.done ) begin
-			//axi4control.ap_done();
+			bdpi_set_done(1);
 		end
 	endrule
 	for ( Integer i = 0; i < valueOf(MemPortCnt); i=i+1 ) begin

@@ -14,10 +14,11 @@
 
 bool g_initialized = false;
 uint32_t* g_buffers[MEM_PORT_CNT];
-uint32_t g_writereq_tag[MEM_PORT_CNT];
 
 pthread_t g_swmain_thread;
-extern void swmain(void* arg);
+extern void *swmain(void* arg);
+
+BsimDeviceStatus* g_device;
 
 
 void init() {
@@ -29,42 +30,28 @@ void init() {
 
 extern "C" uint32_t bdpi_read_word(int bufidx, uint64_t addr) {
 	init();
-	if ( addr >= MEM_BUF_SIZE ) return 0xffffffff;
-
-
-	uint32_t r = g_buffers[bufidx][addr/sizeof(uint32_t)];
-	//printf( "%d %x --> %x\n", bufidx, addr, r );
-	//fflush(stdout);
-	return r;
+	BsimDeviceStatus* device_status = BsimDeviceStatus::getInstance ();
+	return device_status->read_device_buffer(bufidx, addr);
 }
 
+uint32_t write_tag = 0xffffffff;
 extern "C" void bdpi_write_word(int bufidx, uint64_t addr, uint32_t data, uint32_t tag) {
 	init();
-	//if ( tag != g_writereq_tag[bufidx] ) return;
-	if ( addr >= MEM_BUF_SIZE ) return;
-	g_writereq_tag[bufidx]++;
-	g_buffers[bufidx][addr/sizeof(uint32_t)] = data;
+	if ( write_tag == tag ) return;
+	write_tag = tag;
+
+	BsimDeviceStatus* device_status = BsimDeviceStatus::getInstance ();
+	device_status->write_device_buffer(bufidx, addr, data);
 }
 
-/*
-extern "C" void bdpi_write_word(int bufidx, uint64_t addr, 
-	uint64_t data0, uint64_t data1, uint64_t data2, uint64_t data3, uint64_t data4, uint64_t data5, uint64_t data6, uint64_t data7, 
-	uint64_t data8, uint64_t data9, uint64_t data1, uint64_t data3, uint64_t data4, uint64_t data5, uint64_t data6, uint64_t data7, 
-	uint32_t tag) {
+extern "C" uint32_t bdpi_check_started() {
 	init();
-	if ( tag != g_writereq_tag[bufidx] ) return;
-	if ( addr >= MEM_BUF_SIZE ) return;
-
-	g_writereq_tag[bufidx]++;
-
-	g_buffers[bufidx][addr/sizeof(uint64_t)] = data0;
-	g_buffers[bufidx][addr/sizeof(uint64_t) + 1] = data1;
-	g_buffers[bufidx][addr/sizeof(uint64_t) + 2] = data2;
-	g_buffers[bufidx][addr/sizeof(uint64_t) + 3] = data3;
-	g_buffers[bufidx][addr/sizeof(uint64_t) + 4] = data4;
-	g_buffers[bufidx][addr/sizeof(uint64_t) + 5] = data5;
-	g_buffers[bufidx][addr/sizeof(uint64_t) + 6] = data6;
-	g_buffers[bufidx][addr/sizeof(uint64_t) + 7] = data7;
-
+	BsimDeviceStatus* device_status = BsimDeviceStatus::getInstance ();
+	return device_status->is_started()?1:0;
 }
-*/
+
+extern "C" void bdpi_set_done(uint32_t done) {
+	init();
+	BsimDeviceStatus* device_status = BsimDeviceStatus::getInstance ();
+	if ( done != 0 ) device_status->set_done();
+}

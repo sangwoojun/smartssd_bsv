@@ -85,7 +85,7 @@ SDCARD := sd_card
 include $(XF_PROJ_ROOT)/common/includes/opencl/opencl.mk
 include config.mk
 
-CXXFLAGS += $(opencl_CXXFLAGS) -Wall -O0 -g -std=c++1y
+CXXFLAGS += $(opencl_CXXFLAGS) -Wall -O0 -g -std=c++1y -D SYNTH
 LDFLAGS += $(opencl_LDFLAGS)
 
 

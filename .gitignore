@@ -1,7 +1,7 @@
 .*.sw?
 *.log
 *.jou
-.o
+*.o
 _x*
 tmp_*
 build_dir*
