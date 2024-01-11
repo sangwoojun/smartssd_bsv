@@ -43,6 +43,16 @@ extern "C" void bdpi_write_word(int bufidx, uint64_t addr, uint32_t data, uint32
 	BsimDeviceStatus* device_status = BsimDeviceStatus::getInstance ();
 	device_status->write_device_buffer(bufidx, addr, data);
 }
+extern "C" void bdpi_set_param(uint32_t idx, uint32_t val) {
+	init();
+	BsimDeviceStatus* device_status = BsimDeviceStatus::getInstance ();
+	device_status->set_param(idx, val);
+}
+extern "C" uint32_t bdpi_get_param(uint32_t idx) {
+	init();
+	BsimDeviceStatus* device_status = BsimDeviceStatus::getInstance ();
+	return device_status->get_param(idx);
+}
 
 extern "C" uint32_t bdpi_check_started() {
 	init();

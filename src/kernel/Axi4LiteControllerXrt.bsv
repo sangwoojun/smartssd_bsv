@@ -50,6 +50,17 @@ interface Axi4LiteControllerXrtIfc#(numeric type addrSz, numeric type dataSz);
 
 
 	method Bit#(32) scalar00;
+	method Bit#(32) scalar01;
+	method Bit#(32) scalar02;
+	method Bit#(32) scalar03;
+	(* always_ready, always_enabled, prefix="" *)
+	method Action scalar00_w(Bit#(32) data);
+	(* always_ready, always_enabled, prefix="" *)
+	method Action scalar01_w(Bit#(32) data);
+	(* always_ready, always_enabled, prefix="" *)
+	method Action scalar02_w(Bit#(32) data);
+	(* always_ready, always_enabled, prefix="" *)
+	method Action scalar03_w(Bit#(32) data);
 	method Bit#(64) mem_addr;
 	method Bit#(64) file_addr;
 	
@@ -109,6 +120,13 @@ module mkAxi4LiteControllerXrt#(Clock aclk, Reset arst) (Axi4LiteControllerXrtIf
 	method interrupt interrupt() reset_by(arst) clocked_by(aclk);
 
 	method scalar00 scalar00() reset_by(arst) clocked_by(aclk);
+	method scalar01 scalar01() reset_by(arst) clocked_by(aclk);
+	method scalar02 scalar02() reset_by(arst) clocked_by(aclk);
+	method scalar03 scalar03() reset_by(arst) clocked_by(aclk);
+	method scalar00_w(scalar00_w) enable((*inhigh*) scalar00_w_en) clocked_by(aclk) reset_by(arst);
+	method scalar01_w(scalar01_w) enable((*inhigh*) scalar01_w_en) clocked_by(aclk) reset_by(arst);
+	method scalar02_w(scalar02_w) enable((*inhigh*) scalar02_w_en) clocked_by(aclk) reset_by(arst);
+	method scalar03_w(scalar03_w) enable((*inhigh*) scalar03_w_en) clocked_by(aclk) reset_by(arst);
 	method mem mem_addr() reset_by(arst) clocked_by(aclk);
 	method file file_addr() reset_by(arst) clocked_by(aclk);
 	
@@ -124,7 +142,7 @@ module mkAxi4LiteControllerXrt#(Clock aclk, Reset arst) (Axi4LiteControllerXrtIf
 		pins_read_address, pins_read_address_valid, pins_arready,
 		pins_rvalid, pins_read_data_ready, pins_rresp, pins_rdata,
 		interrupt,
-		scalar00,mem_addr,file_addr,
+		scalar00,scalar01,scalar02,scalar03,mem_addr,file_addr,
 		ap_start, ap_done, ap_ready, ap_idle
 		) CF (
 		pins_write_address, pins_write_address_valid, pins_awready,
@@ -133,7 +151,7 @@ module mkAxi4LiteControllerXrt#(Clock aclk, Reset arst) (Axi4LiteControllerXrtIf
 		pins_read_address, pins_read_address_valid, pins_arready,
 		pins_rvalid, pins_read_data_ready, pins_rresp, pins_rdata,
 		interrupt,
-		scalar00,mem_addr,file_addr,
+		scalar00,scalar01,scalar02,scalar03,mem_addr,file_addr,
 		ap_start, ap_done, ap_ready, ap_idle
 		);
 	

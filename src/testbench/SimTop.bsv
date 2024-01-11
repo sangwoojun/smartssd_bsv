@@ -6,17 +6,33 @@ import KernelMain::*;
 //import "BDPI" function Action bdpi_write_word(Bit#(32) buffer, Bit#(64) addr, Bit#(64) data0, Bit#(64) data1, Bit#(64) data2, Bit#(64) data3, Bit#(64) data4, Bit#(64) data5, Bit#(64) data6, Bit#(64) data7, Bit#(32) tag);
 import "BDPI" function Action bdpi_write_word(Bit#(32) buffer, Bit#(64) addr, Bit#(32) data, Bit#(32) tag);
 import "BDPI" function Bit#(64) bdpi_read_word(Bit#(32) buffer, Bit#(64) addr);
+import "BDPI" function Action bdpi_set_param(Bit#(32) idx, Bit#(32) val);
+import "BDPI" function Bit#(32) bdpi_get_param(Bit#(32) idx);
 import "BDPI" function Bit#(32) bdpi_check_started();
 import "BDPI" function Action bdpi_set_done(Bit#(32) done);
 
 module mkSimTop(Empty);
 	KernelMainIfc kernelMain <- mkKernelMain;
 	rule checkStart;
-		if ( bdpi_check_started != 0 ) kernelMain.start(0);
+		if ( bdpi_check_started != 0 ) kernelMain.start;
 	endrule
 	rule checkDone;
 		if ( kernelMain.done ) begin
 			bdpi_set_done(1);
+		end
+	endrule
+	rule relay_param_sync;
+		Vector#(ParamCnt, Bit#(32)) params;
+
+		for ( Integer i = 0; i < valueOf(ParamCnt); i=i+1 ) begin
+			params[i] = bdpi_get_param(fromInteger(i));
+		end
+		kernelMain.sync_param(params);
+	endrule
+	rule relay_param_set;
+		Vector#(ParamCnt, Bit#(32)) paramo = kernelMain.update_param;
+		for ( Integer i = 0; i < valueOf(ParamCnt); i=i+1 ) begin
+			bdpi_set_param(fromInteger(i), paramo[i]);
 		end
 	endrule
 	for ( Integer i = 0; i < valueOf(MemPortCnt); i=i+1 ) begin
@@ -30,7 +46,7 @@ module mkSimTop(Empty);
 
 		Reg#(Bit#(64)) memWriteAddr <- mkReg(0);
 		Reg#(Bit#(32)) memWriteBytesLeft <- mkReg(-1);
-		rule relayWriteReq;
+		rule relayWriteReq (memWriteBytesLeft == 0);
 			let r <- kernelMain.mem[i].writeReq;
 			memWriteAddr <= r.addr;
 			memWriteBytesLeft <= r.bytes;

@@ -53,6 +53,9 @@ void* swmain(void* arg) {
 
     std::cout << "Setting the parameter registers" << std::endl;
 	set_param(0, DATA_SIZE);
+	set_param(1, 0xdeafbeef);
+	set_param(2, 0xc001d00d);
+	set_param(3, 0x1234abcd);
 
     std::cout << "INFO: IP Start" << std::endl;
 	send_start();

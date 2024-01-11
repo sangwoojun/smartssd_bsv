@@ -1,6 +1,8 @@
 import FIFO::*;
 import Vector::*;
 
+typedef 4 ParamCnt;
+
 typedef 2 MemPortCnt;
 
 interface MemPortIfc;
@@ -11,9 +13,12 @@ interface MemPortIfc;
 endinterface
 
 interface KernelMainIfc;
-	method Action start(Bit#(32) param);
+	method Action start;
 	method Bool done;
 	interface Vector#(MemPortCnt, MemPortIfc) mem;
+
+	method Action sync_param(Vector#(ParamCnt, Bit#(32)) data);
+	method Vector#(ParamCnt, Bit#(32)) update_param;
 endinterface
 
 typedef struct {
@@ -23,6 +28,7 @@ typedef struct {
 
 
 module mkKernelMain(KernelMainIfc);
+	Vector#(ParamCnt, Reg#(Bit#(32))) params <- replicateM(mkReg(0));
 	Vector#(MemPortCnt, FIFO#(MemPortReq)) readReqQs <- replicateM(mkFIFO);
 	Vector#(MemPortCnt, FIFO#(MemPortReq)) writeReqQs <- replicateM(mkFIFO);
 	Vector#(MemPortCnt, FIFO#(Bit#(512))) writeWordQs <- replicateM(mkFIFO);
@@ -63,7 +69,6 @@ module mkKernelMain(KernelMainIfc);
 
 
 
-
 	
 	Vector#(MemPortCnt, MemPortIfc) mem_;
 	for (Integer i = 0; i < valueOf(MemPortCnt); i=i+1) begin
@@ -85,12 +90,26 @@ module mkKernelMain(KernelMainIfc);
 			endmethod
 		endinterface;
 	end
-	method Action start(Bit#(32) param);
+	method Action start;
 		kernelStarted <= True;
+		//$display( "%x %x %x %x\n", params[0], params[1], params[2], params[3] );
 	endmethod
 	method Bool done;
 		return kernelDone;
 	endmethod
 	interface mem = mem_;
+	method Action sync_param(Vector#(ParamCnt, Bit#(32)) data);
+		for (Integer i = 0; i < valueOf(ParamCnt); i=i+1) begin
+			params[i] <= data[i];
+			//$write( ">> %d %x\n", i, data[i] );
+		end
+	endmethod
+	method Vector#(ParamCnt, Bit#(32)) update_param if (kernelStarted);
+		Vector#(ParamCnt, Bit#(32)) ret;
+		for (Integer i = 0; i < valueOf(ParamCnt); i=i+1) begin
+			ret[i] = params[i];
+		end
+		return ret;
+	endmethod
 endmodule
 
