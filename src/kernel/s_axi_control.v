@@ -406,10 +406,10 @@ always @(posedge ACLK) begin
     if (ARESET)
         int_scalar00[31:0] <= 0;
     else if (ACLK_EN) begin
-        if (w_hs && waddr == ADDR_SCALAR00_DATA_0)
+        if (w_hs && waddr == ADDR_SCALAR00_DATA_0) begin
             int_scalar00[31:0] <= (WDATA[31:0] & wmask) | (int_scalar00[31:0] & ~wmask);
 			epoch_scalar00 <= epoch_scalar00 + 1;
-		else int_scalar00[31:0] <= scalar00_w;
+		end else int_scalar00[31:0] <= scalar00_w;
     end
 end
 
@@ -418,10 +418,10 @@ always @(posedge ACLK) begin
     if (ARESET)
         int_scalar01[31:0] <= 0;
     else if (ACLK_EN) begin
-        if (w_hs && waddr == ADDR_SCALAR01_DATA_0)
+        if (w_hs && waddr == ADDR_SCALAR01_DATA_0) begin
             int_scalar01[31:0] <= (WDATA[31:0] & wmask) | (int_scalar01[31:0] & ~wmask);
 			epoch_scalar01 <= epoch_scalar01 + 1;
-		else int_scalar01[31:0] <= scalar01_w;
+		end else int_scalar01[31:0] <= scalar01_w;
     end
 end
 
@@ -430,10 +430,10 @@ always @(posedge ACLK) begin
     if (ARESET)
         int_scalar02[31:0] <= 0;
     else if (ACLK_EN) begin
-        if (w_hs && waddr == ADDR_SCALAR02_DATA_0)
+        if (w_hs && waddr == ADDR_SCALAR02_DATA_0) begin
             int_scalar02[31:0] <= (WDATA[31:0] & wmask) | (int_scalar02[31:0] & ~wmask);
 			epoch_scalar02 <= epoch_scalar02 + 1;
-		else int_scalar02[31:0] <= scalar02_w;
+		end else int_scalar02[31:0] <= scalar02_w;
     end
 end
 
@@ -442,10 +442,10 @@ always @(posedge ACLK) begin
     if (ARESET)
         int_scalar03[31:0] <= 0;
     else if (ACLK_EN) begin
-        if (w_hs && waddr == ADDR_SCALAR03_DATA_0)
+        if (w_hs && waddr == ADDR_SCALAR03_DATA_0) begin
             int_scalar03[31:0] <= (WDATA[31:0] & wmask) | (int_scalar03[31:0] & ~wmask);
 			epoch_scalar03 <= epoch_scalar03 + 1;
-		else int_scalar03[31:0] <= scalar03_w;
+		end else int_scalar03[31:0] <= scalar03_w;
     end
 end
 
