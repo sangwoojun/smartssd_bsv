@@ -37,7 +37,7 @@ module mkKernelTop (KernelTopIfc);
 	KernelMainIfc kernelMain <- mkKernelMain;
 	rule checkStart (!started);
 		if ( axi4control.ap_start ) begin
-			kernelMain.start(axi4control.scalar00);
+			kernelMain.start;
 			started <= True;
 		end
 	endrule
@@ -67,6 +67,36 @@ module mkKernelTop (KernelTopIfc);
 			kernelMain.mem[i].readWord(d);
 		endrule
 	end
+	rule relay_param_set;
+		Vector#(ParamCnt, Maybe#(Bit#(32))) paramo <- kernelMain.update_param;
+		if ( isValid(paramo[0]) ) axi4control.scalar00_w(fromMaybe(?,paramo[0]));
+		if ( isValid(paramo[1]) ) axi4control.scalar01_w(fromMaybe(?,paramo[1]));
+		if ( isValid(paramo[2]) ) axi4control.scalar02_w(fromMaybe(?,paramo[2]));
+		if ( isValid(paramo[3]) ) axi4control.scalar03_w(fromMaybe(?,paramo[3]));
+	endrule
+	Vector#(ParamCnt, Reg#(Bit#(32))) lastepochs <- replicateM(mkReg(-1));
+	rule relay_param_sync;
+		Vector#(ParamCnt, Maybe#(Bit#(32))) params;
+		Vector#(ParamCnt, Bit#(32)) scalars;
+		Vector#(ParamCnt, Bit#(32)) epochs;
+		scalars[0] = axi4control.scalar00;
+		epochs[0] = axi4control.scalar00_epoch;
+		scalars[1] = axi4control.scalar01;
+		epochs[1] = axi4control.scalar01_epoch;
+		scalars[2] = axi4control.scalar02;
+		epochs[2] = axi4control.scalar02_epoch;
+		scalars[3] = axi4control.scalar03;
+		epochs[3] = axi4control.scalar03_epoch;
+
+		
+		for ( Integer i = 0; i < valueOf(ParamCnt); i=i+1 ) begin
+			if ( lastepochs[i] != epochs[i] ) begin
+				lastepochs[i] <= epochs[i];
+				params[i] = tagged Valid scalars[0];
+			end else params[i] = tagged Invalid;
+		end
+		kernelMain.sync_param(params);
+	endrule
 
 
 

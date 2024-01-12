@@ -35,13 +35,21 @@ module s_axi4_lite_controller
     input  wire                          ap_ready,
     input  wire                          ap_idle,
     output wire [31:0]                   scalar00,
+    output wire [31:0]                   scalar00_epoch,
 	input  wire [31:0]					 scalar00_w,
+	input  wire [31:0]					 scalar00_w_en,
     output wire [31:0]                   scalar01,
+    output wire [31:0]                   scalar01_epoch,
 	input  wire [31:0]					 scalar01_w,
+	input  wire [31:0]					 scalar01_w_en,
     output wire [31:0]                   scalar02,
+    output wire [31:0]                   scalar02_epoch,
 	input  wire [31:0]					 scalar02_w,
+	input  wire [31:0]					 scalar02_w_en,
     output wire [31:0]                   scalar03,
+    output wire [31:0]                   scalar03_epoch,
 	input  wire [31:0]					 scalar03_w,
+	input  wire [31:0]					 scalar03_w_en,
     output wire [63:0]                   mem,
     output wire [63:0]                   file
 
@@ -135,6 +143,10 @@ localparam
     reg  [31:0]                   int_scalar01 = 'b0;
     reg  [31:0]                   int_scalar02 = 'b0;
     reg  [31:0]                   int_scalar03 = 'b0;
+    reg  [31:0]                   epoch_scalar00 = 'b0;
+    reg  [31:0]                   epoch_scalar01 = 'b0;
+    reg  [31:0]                   epoch_scalar02 = 'b0;
+    reg  [31:0]                   epoch_scalar03 = 'b0;
 
     reg  [63:0]                   int_mem = 'b0;
     reg  [63:0]                   int_file = 'b0;
@@ -287,6 +299,10 @@ assign scalar00     = int_scalar00;
 assign scalar01     = int_scalar01;
 assign scalar02     = int_scalar02;
 assign scalar03     = int_scalar03;
+assign scalar00_epoch     = epoch_scalar00;
+assign scalar01_epoch     = epoch_scalar01;
+assign scalar02_epoch     = epoch_scalar02;
+assign scalar03_epoch     = epoch_scalar03;
 assign mem          = int_mem;
 assign file         = int_file;
 // int_ap_start
@@ -392,6 +408,7 @@ always @(posedge ACLK) begin
     else if (ACLK_EN) begin
         if (w_hs && waddr == ADDR_SCALAR00_DATA_0)
             int_scalar00[31:0] <= (WDATA[31:0] & wmask) | (int_scalar00[31:0] & ~wmask);
+			epoch_scalar00 <= epoch_scalar00 + 1;
 		else int_scalar00[31:0] <= scalar00_w;
     end
 end
@@ -403,6 +420,7 @@ always @(posedge ACLK) begin
     else if (ACLK_EN) begin
         if (w_hs && waddr == ADDR_SCALAR01_DATA_0)
             int_scalar01[31:0] <= (WDATA[31:0] & wmask) | (int_scalar01[31:0] & ~wmask);
+			epoch_scalar01 <= epoch_scalar01 + 1;
 		else int_scalar01[31:0] <= scalar01_w;
     end
 end
@@ -414,6 +432,7 @@ always @(posedge ACLK) begin
     else if (ACLK_EN) begin
         if (w_hs && waddr == ADDR_SCALAR02_DATA_0)
             int_scalar02[31:0] <= (WDATA[31:0] & wmask) | (int_scalar02[31:0] & ~wmask);
+			epoch_scalar02 <= epoch_scalar02 + 1;
 		else int_scalar02[31:0] <= scalar02_w;
     end
 end
@@ -425,6 +444,7 @@ always @(posedge ACLK) begin
     else if (ACLK_EN) begin
         if (w_hs && waddr == ADDR_SCALAR03_DATA_0)
             int_scalar03[31:0] <= (WDATA[31:0] & wmask) | (int_scalar03[31:0] & ~wmask);
+			epoch_scalar03 <= epoch_scalar03 + 1;
 		else int_scalar03[31:0] <= scalar03_w;
     end
 end

@@ -53,13 +53,17 @@ interface Axi4LiteControllerXrtIfc#(numeric type addrSz, numeric type dataSz);
 	method Bit#(32) scalar01;
 	method Bit#(32) scalar02;
 	method Bit#(32) scalar03;
+	method Bit#(32) scalar00_epoch;
+	method Bit#(32) scalar01_epoch;
+	method Bit#(32) scalar02_epoch;
+	method Bit#(32) scalar03_epoch;
 	(* always_ready, always_enabled, prefix="" *)
 	method Action scalar00_w(Bit#(32) data);
-	(* always_ready, always_enabled, prefix="" *)
+	(* always_ready, prefix="" *)
 	method Action scalar01_w(Bit#(32) data);
-	(* always_ready, always_enabled, prefix="" *)
+	(* always_ready, prefix="" *)
 	method Action scalar02_w(Bit#(32) data);
-	(* always_ready, always_enabled, prefix="" *)
+	(* always_ready, prefix="" *)
 	method Action scalar03_w(Bit#(32) data);
 	method Bit#(64) mem_addr;
 	method Bit#(64) file_addr;
@@ -123,10 +127,14 @@ module mkAxi4LiteControllerXrt#(Clock aclk, Reset arst) (Axi4LiteControllerXrtIf
 	method scalar01 scalar01() reset_by(arst) clocked_by(aclk);
 	method scalar02 scalar02() reset_by(arst) clocked_by(aclk);
 	method scalar03 scalar03() reset_by(arst) clocked_by(aclk);
-	method scalar00_w(scalar00_w) enable((*inhigh*) scalar00_w_en) clocked_by(aclk) reset_by(arst);
-	method scalar01_w(scalar01_w) enable((*inhigh*) scalar01_w_en) clocked_by(aclk) reset_by(arst);
-	method scalar02_w(scalar02_w) enable((*inhigh*) scalar02_w_en) clocked_by(aclk) reset_by(arst);
-	method scalar03_w(scalar03_w) enable((*inhigh*) scalar03_w_en) clocked_by(aclk) reset_by(arst);
+	method scalar00_epoch scalar00_epoch() reset_by(arst) clocked_by(aclk);
+	method scalar01_epoch scalar01_epoch() reset_by(arst) clocked_by(aclk);
+	method scalar02_epoch scalar02_epoch() reset_by(arst) clocked_by(aclk);
+	method scalar03_epoch scalar03_epoch() reset_by(arst) clocked_by(aclk);
+	method scalar00_w(scalar00_w) enable(scalar00_w_en) clocked_by(aclk) reset_by(arst);
+	method scalar01_w(scalar01_w) enable(scalar01_w_en) clocked_by(aclk) reset_by(arst);
+	method scalar02_w(scalar02_w) enable(scalar02_w_en) clocked_by(aclk) reset_by(arst);
+	method scalar03_w(scalar03_w) enable(scalar03_w_en) clocked_by(aclk) reset_by(arst);
 	method mem mem_addr() reset_by(arst) clocked_by(aclk);
 	method file file_addr() reset_by(arst) clocked_by(aclk);
 	
@@ -143,6 +151,8 @@ module mkAxi4LiteControllerXrt#(Clock aclk, Reset arst) (Axi4LiteControllerXrtIf
 		pins_rvalid, pins_read_data_ready, pins_rresp, pins_rdata,
 		interrupt,
 		scalar00,scalar01,scalar02,scalar03,mem_addr,file_addr,
+		scalar00_w, scalar01_w, scalar02_w, scalar03_w,
+		scalar00_epoch, scalar01_epoch, scalar02_epoch, scalar03_epoch,
 		ap_start, ap_done, ap_ready, ap_idle
 		) CF (
 		pins_write_address, pins_write_address_valid, pins_awready,
@@ -152,6 +162,8 @@ module mkAxi4LiteControllerXrt#(Clock aclk, Reset arst) (Axi4LiteControllerXrtIf
 		pins_rvalid, pins_read_data_ready, pins_rresp, pins_rdata,
 		interrupt,
 		scalar00,scalar01,scalar02,scalar03,mem_addr,file_addr,
+		scalar00_w, scalar01_w, scalar02_w, scalar03_w,
+		scalar00_epoch, scalar01_epoch, scalar02_epoch, scalar03_epoch,
 		ap_start, ap_done, ap_ready, ap_idle
 		);
 	
