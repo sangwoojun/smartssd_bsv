@@ -49,7 +49,7 @@ class BsimDeviceStatus {
 public:
 	static BsimDeviceStatus* getInstance();
 	void set_param(int idx, uint32_t val);
-	uint32_t get_param(int idx);
+	uint64_t get_param(int idx);
 	void set_buffer(int idx, FPGABuffer* buffer) {buffer_array[idx]=buffer;};
 	FPGABuffer* get_buffer(int idx) {return buffer_array[idx];};
 	uint32_t read_device_buffer(int idx, size_t offset);
@@ -64,6 +64,7 @@ private:
 	BsimDeviceStatus();
 
 	uint32_t param_array[PARAM_COUNT];
+	bool param_updated[PARAM_COUNT];
 	FPGABuffer* buffer_array[BUFFER_COUNT];
 	bool started;
 	bool done;
@@ -77,7 +78,7 @@ FPGABuffer create_buffer(size_t bytes);
 void sync_buffer(FPGABuffer buffer, size_t offset, size_t bytes, bool to_fpga);
 
 void set_param(size_t idx, uint32_t value);
-uint32_t get_param(size_t idx);
+uint64_t get_param(size_t idx);
 
 //void write_register32(size_t idx, uint32_t value);
 //void write_register64(size_t idx, uint64_t value);

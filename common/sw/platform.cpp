@@ -76,25 +76,35 @@ BsimDeviceStatus::BsimDeviceStatus() {
 	memset(buffer_array, 0, sizeof(FPGABuffer*)*BUFFER_COUNT);
 }
 void BsimDeviceStatus::set_param(int idx, uint32_t val) {
-	if ( idx < PARAM_COUNT ) param_array[idx] = val;
+	if ( idx < PARAM_COUNT ) {
+		param_array[idx] = val;
+		param_updated[idx] = true;
+	}
 }
-uint32_t BsimDeviceStatus::get_param(int idx) {
-	if ( idx >= PARAM_COUNT ) return 0xffffffff;
-	return param_array[idx];
+uint64_t BsimDeviceStatus::get_param(int idx) {
+	uint64_t r = 0;
+	if ( idx >= PARAM_COUNT ) return r;
+
+	uint64_t v = (uint64_t)param_array[idx];
+	r =  (v<<32|(param_updated[idx]?1:0));
+	param_updated[idx] = false;
+	return r;
 };
 uint32_t BsimDeviceStatus::read_device_buffer(int idx, size_t offset) {
 	if ( idx >= BUFFER_COUNT ) return 0xffffffff;
 	if ( buffer_array[idx] == NULL ) return 0xffffffff;
 	if ( offset +4 >= buffer_array[idx]->bytes ) return 0xffffffff;
 
-	return buffer_array[idx]->device_buffer[offset/sizeof(uint32_t)];
+	uint32_t ret = ((uint32_t*)buffer_array[idx]->device_buffer)[offset/sizeof(uint32_t)];
+	//printf( "%d %x %x\n", idx, offset, ret );
+	return ret;
 }
 void BsimDeviceStatus::write_device_buffer(int idx, size_t offset, uint32_t val) {
 	if ( idx >= BUFFER_COUNT ) return;
 	if ( buffer_array[idx] == NULL ) return;
 	if ( offset +4 >= buffer_array[idx]->bytes ) return;
 
-	buffer_array[idx]->device_buffer[offset/sizeof(uint32_t)] = val;
+	((uint32_t*)buffer_array[idx]->device_buffer)[offset/sizeof(uint32_t)] = val;
 }
 #endif
 
@@ -135,7 +145,7 @@ void set_param(size_t idx, uint32_t value) {
 #endif
 }
 
-uint32_t get_param(size_t idx) {
+uint64_t get_param(size_t idx) {
 #ifdef SYNTH
 	return g_ip.read_register(g_args[REGISTER_IDX_START+idx].get_offset());
 #else

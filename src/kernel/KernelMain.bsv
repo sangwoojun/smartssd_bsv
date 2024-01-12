@@ -2,6 +2,55 @@ import FIFO::*;
 import Vector::*;
 
 typedef 4 ParamCnt;
+interface Reg2W1RIfc;
+	method Action write1(Bit#(32) data);
+	method Action write2(Bit#(32) data);
+	method ActionValue#(Maybe#(Bit#(32))) read;
+endinterface
+interface ParamFileIfc#(numeric type cnt);
+	interface Vector#(cnt, Reg2W1RIfc) regs;
+	method Action display;
+endinterface
+module mkParamFile(ParamFileIfc#(cnt));
+	Vector#(cnt, Reg#(Bit#(32))) params <- replicateM(mkReg(0));
+	Vector#(cnt, Reg#(Bit#(1))) param_write_epoch <- replicateM(mkReg(0));
+	Vector#(cnt, Reg#(Bit#(1))) param_read_epoch <- replicateM(mkReg(0));
+	
+	Vector#(cnt, RWire#(Bit#(32))) write1reqs <- replicateM(mkRWire());
+	Vector#(cnt, RWire#(Bit#(32))) write2reqs <- replicateM(mkRWire());
+
+	Vector#(cnt, Reg2W1RIfc) regs_;
+	for (Integer i = 0; i < valueOf(cnt); i=i+1) begin
+		rule applywrite;
+			let a = write1reqs[i].wget;
+			let b = write2reqs[i].wget;
+			if ( isValid(a) ) begin
+				params[i] <= fromMaybe(?,a);
+				if ( param_read_epoch[i] == param_write_epoch[i] ) param_write_epoch[i] <= ~param_write_epoch[i];
+			end else if ( isValid(b) ) params[i] <= fromMaybe(?,b);
+		endrule
+		 
+		regs_[i] = interface Reg2W1RIfc;
+			method Action write1(Bit#(32) data);
+				write1reqs[i].wset(data);
+			endmethod
+			method Action write2(Bit#(32) data);
+				write2reqs[i].wset(data);
+			endmethod
+			method ActionValue#(Maybe#(Bit#(32))) read;
+				if ( param_write_epoch[i] == param_read_epoch[i] ) return tagged Invalid;
+				else begin
+					param_read_epoch[i] <= ~param_read_epoch[i];
+					return tagged Valid params[i];
+				end
+			endmethod
+		endinterface;
+	end
+	interface regs = regs_;
+	method Action display;
+		$write( "%x %x %x %x\n", params[0], params[1], params[2], params[3] );
+	endmethod
+endmodule
 
 typedef 2 MemPortCnt;
 
@@ -17,8 +66,8 @@ interface KernelMainIfc;
 	method Bool done;
 	interface Vector#(MemPortCnt, MemPortIfc) mem;
 
-	method Action sync_param(Vector#(ParamCnt, Bit#(32)) data);
-	method Vector#(ParamCnt, Bit#(32)) update_param;
+	method Action sync_param(Vector#(ParamCnt, Maybe#(Bit#(32))) data);
+	method ActionValue#(Vector#(ParamCnt, Maybe#(Bit#(32)))) update_param;
 endinterface
 
 typedef struct {
@@ -27,8 +76,9 @@ typedef struct {
 } MemPortReq deriving (Eq,Bits);
 
 
+
 module mkKernelMain(KernelMainIfc);
-	Vector#(ParamCnt, Reg#(Bit#(32))) params <- replicateM(mkReg(0));
+	ParamFileIfc#(ParamCnt) params <- mkParamFile;
 	Vector#(MemPortCnt, FIFO#(MemPortReq)) readReqQs <- replicateM(mkFIFO);
 	Vector#(MemPortCnt, FIFO#(MemPortReq)) writeReqQs <- replicateM(mkFIFO);
 	Vector#(MemPortCnt, FIFO#(Bit#(512))) writeWordQs <- replicateM(mkFIFO);
@@ -60,6 +110,7 @@ module mkKernelMain(KernelMainIfc);
 		let d = readWordQs[0].first;
 		readWordQs[0].deq;
 		writeWordQs[1].enq(d);
+		//$write( "%x\n", d );
 		writeWordCnt <= writeWordCnt + 1;
 		if ( writeWordCnt == 255 ) kernelDone <= True;
 	endrule
@@ -92,22 +143,23 @@ module mkKernelMain(KernelMainIfc);
 	end
 	method Action start;
 		kernelStarted <= True;
-		//$display( "%x %x %x %x\n", params[0], params[1], params[2], params[3] );
+		//params.display;
+		//$display( "%x %x %x %x\n", params.regs[0].read, params.regs[1].read, params.regs[2].read, params.regs[3].read );
 	endmethod
 	method Bool done;
 		return kernelDone;
 	endmethod
 	interface mem = mem_;
-	method Action sync_param(Vector#(ParamCnt, Bit#(32)) data);
+	method Action sync_param(Vector#(ParamCnt, Maybe#(Bit#(32))) data);
 		for (Integer i = 0; i < valueOf(ParamCnt); i=i+1) begin
-			params[i] <= data[i];
+			if ( isValid(data[i]) )params.regs[i].write2(fromMaybe(?,data[i]));
 			//$write( ">> %d %x\n", i, data[i] );
 		end
 	endmethod
-	method Vector#(ParamCnt, Bit#(32)) update_param if (kernelStarted);
-		Vector#(ParamCnt, Bit#(32)) ret;
+	method ActionValue#(Vector#(ParamCnt, Maybe#(Bit#(32)))) update_param if (kernelStarted);
+		Vector#(ParamCnt, Maybe#(Bit#(32))) ret;
 		for (Integer i = 0; i < valueOf(ParamCnt); i=i+1) begin
-			ret[i] = params[i];
+			ret[i] <- params.regs[i].read();
 		end
 		return ret;
 	endmethod

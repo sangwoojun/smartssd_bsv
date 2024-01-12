@@ -7,7 +7,7 @@ import KernelMain::*;
 import "BDPI" function Action bdpi_write_word(Bit#(32) buffer, Bit#(64) addr, Bit#(32) data, Bit#(32) tag);
 import "BDPI" function Bit#(64) bdpi_read_word(Bit#(32) buffer, Bit#(64) addr);
 import "BDPI" function Action bdpi_set_param(Bit#(32) idx, Bit#(32) val);
-import "BDPI" function Bit#(32) bdpi_get_param(Bit#(32) idx);
+import "BDPI" function Bit#(64) bdpi_get_param(Bit#(32) idx);
 import "BDPI" function Bit#(32) bdpi_check_started();
 import "BDPI" function Action bdpi_set_done(Bit#(32) done);
 
@@ -22,17 +22,20 @@ module mkSimTop(Empty);
 		end
 	endrule
 	rule relay_param_sync;
-		Vector#(ParamCnt, Bit#(32)) params;
+		Vector#(ParamCnt, Maybe#(Bit#(32))) params;
 
 		for ( Integer i = 0; i < valueOf(ParamCnt); i=i+1 ) begin
-			params[i] = bdpi_get_param(fromInteger(i));
+			Bit#(64) r = bdpi_get_param(fromInteger(i));
+
+			if ( r[0] == 1 ) params[i] = tagged Valid (truncate(r>>32));
+			else params[i] = tagged Invalid;
 		end
 		kernelMain.sync_param(params);
 	endrule
 	rule relay_param_set;
-		Vector#(ParamCnt, Bit#(32)) paramo = kernelMain.update_param;
+		Vector#(ParamCnt, Maybe#(Bit#(32))) paramo <- kernelMain.update_param;
 		for ( Integer i = 0; i < valueOf(ParamCnt); i=i+1 ) begin
-			bdpi_set_param(fromInteger(i), paramo[i]);
+			if ( isValid(paramo[i]) ) bdpi_set_param(fromInteger(i), fromMaybe(?,paramo[i]));
 		end
 	endrule
 	for ( Integer i = 0; i < valueOf(MemPortCnt); i=i+1 ) begin
@@ -56,17 +59,12 @@ module mkSimTop(Empty);
 		Reg#(Bit#(32)) memWriteTag <- mkReg(0);
 		rule relayWriteWord ( memWriteBytesLeft > 0 );
 			let r <- kernelMain.mem[i].writeWord;
+			//$write( "%x\n", r);
 			for ( Integer j = 0; j < 512/32; j=j+1 ) begin
 				Bit#(32) w = truncate(r>>(j*32));
-				bdpi_write_word(fromInteger(i), memWriteAddr + fromInteger(j*4), w, memWriteTag);
+				bdpi_write_word(fromInteger(i), memWriteAddr + fromInteger(j*4), w, memWriteTag+fromInteger(j));
 			end
-			/*
-			bdpi_write_word(fromInteger(i), memWriteAddr, 
-				wvec[0], wvec[1], wvec[2], wvec[3], 
-				wvec[4], wvec[5], wvec[6], wvec[7]
-				, memWriteTag);
-			*/
-			memWriteTag <= memWriteTag + 1;
+			memWriteTag <= memWriteTag + (512/32);
 			memWriteAddr <= memWriteAddr + 64;
 			if ( memWriteBytesLeft >= 64 ) begin
 				memWriteBytesLeft <= memWriteBytesLeft - 64;
@@ -87,7 +85,6 @@ module mkSimTop(Empty);
 				memReadBytesLeft <= 0;
 			end
 			kernelMain.mem[i].readWord(rword);
-			//$write( "Mem read from %x %x\n", memReadAddr, rword );
 		endrule
 	end
 
